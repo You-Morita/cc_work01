@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cc_work01</title>
+<style>
+  :root {
+    --bg: #060912;
+    --surface: #0c1120;
+    --border: #141e32;
+    --text: #dde0f5;
+    --muted: #445566;
+    --accent: #7c6af7;
+    --accent2: #f0a030;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 60px 24px 80px;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+
+  .hero-eyebrow {
+    font-size: 0.75rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 200;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+  }
+
+  .hero-title strong {
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--accent), #a080ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 20px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Section */
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 960px;
+    margin: 0 auto 64px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(124,106,247,0.12);
+  }
+
+  .card-thumb {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-thumb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .thumb-clock   { background: linear-gradient(135deg, #0e1f35 0%, #0a1525 100%); }
+  .thumb-map     { background: linear-gradient(135deg, #0d1a2e 0%, #07101e 100%); }
+  .thumb-leaflet { background: linear-gradient(135deg, #070e1c 0%, #0c1528 100%); }
+
+  .thumb-deco {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.06;
+    font-size: 9rem;
+    user-select: none;
+  }
+
+  .card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .card-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .card-arrow {
+    font-size: 0.8rem;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .card:hover .card-arrow {
+    opacity: 1;
+    transform: translateX(3px);
+  }
+
+  /* Featured card */
+  .card.featured {
+    grid-column: span 2;
+    flex-direction: row;
+  }
+
+  .card.featured .card-thumb {
+    width: 220px;
+    height: auto;
+    flex-shrink: 0;
+    border-radius: 0;
+  }
+
+  @media (max-width: 640px) {
+    .card.featured {
+      grid-column: span 1;
+      flex-direction: column;
+    }
+    .card.featured .card-thumb {
+      width: 100%;
+      height: 140px;
+    }
+  }
+
+  /* About */
+  .about {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .about-icon { font-size: 2.5rem; flex-shrink: 0; }
+
+  .about-text h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .about-text p {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 64px;
+    font-size: 0.7rem;
+    color: #1e2a3a;
+    letter-spacing: 0.12em;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <p class="hero-eyebrow">Portfolio</p>
+  <h1 class="hero-title">Made with <strong>Claude</strong></h1>
+  <p class="hero-sub">Experiments &amp; mini-apps built in one session</p>
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    Claude Sonnet 4.6 &nbsp;·&nbsp; 2026
+  </div>
+</header>
+
+<p class="section-label">Works</p>
+
+<div class="grid">
+
+  <!-- Featured: Leaflet Map -->
+  <a class="card featured" href="works/world-clock-map2/">
+    <div class="card-thumb thumb-leaflet">
+      <div class="thumb-deco">🗺️</div>
+      🗺️
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column;">
+      <div class="card-body">
+        <div class="card-title">World Clock Map</div>
+        <div class="card-desc">
+          Leaflet.js × CartoDB ダークタイルを使ったインタラクティブな世界時計。
+          10都市のリアルタイム時刻をマーカーで表示。ホバーで詳細カード、
+          下部ティッカーで全都市を一覧。
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class="tags">
+          <span class="tag">HTML</span>
+          <span class="tag">Leaflet.js</span>
+          <span class="tag">OpenStreetMap</span>
+          <span class="tag">Intl API</span>
+        </div>
+        <span class="card-arrow">→</span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Card Clock -->
+  <a class="card" href="works/world-clock/">
+    <div class="card-thumb thumb-clock">
+      <div class="thumb-deco">🕐</div>
+      🕐
+    </div>
+    <div class="card-body">
+      <div class="card-title">World Clock</div>
+      <div class="card-desc">
+        グリッドカード形式の世界時計。アナログ＋デジタルの併用表示、
+        昼夜の背景色変化、時差オフセット付き。
+      </div>
+    </div>
+    <div class="card-footer">
+      <div class="tags">
+        <span class="tag">HTML</span>
+        <span class="tag">CSS</span>
+        <span class="tag">Vanilla JS</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </div>
+  </a>
+
+  <!-- SVG Map Clock -->
+  <a class="card" href="works/world-clock-map/">
+    <div class="card-thumb thumb-map">
+      <div class="thumb-deco">🌐</div>
+      🌐
+    </div>
+    <div class="card-body">
+      <div class="card-title">World Clock Map <span style="font-size:0.7rem;color:var(--muted);font-weight:400;">SVG版</span></div>
+      <div class="card-desc">
+        SVGで手描きした世界地図に都市ピンをマッピング。
+        昼夜ターミネーターを太陽位置計算で描画。
+      </div>
+    </div>
+    <div class="card-footer">
+      <div class="tags">
+        <span class="tag">HTML</span>
+        <span class="tag">SVG</span>
+        <span class="tag">Vanilla JS</span>
+      </div>
+      <span class="card-arrow">→</span>
+    </div>
+  </a>
+
+</div>
+
+<p class="section-label">About</p>
+
+<div class="about">
+  <div class="about-icon">🤖</div>
+  <div class="about-text">
+    <h3>このサイトについて</h3>
+    <p>
+      Claude（Anthropic）との対話セッションで制作したミニアプリ集です。
+      アイデア出しからコーディング・デプロイまで、すべて1セッションで完結しています。
+      Kiroで設計したものをClaudeでカスタマイズするワークフローも実験中。
+    </p>
+  </div>
+</div>
+
+<footer>cc_work01 &nbsp;·&nbsp; Powered by Claude Sonnet 4.6</footer>
+
+</body>
+</html>

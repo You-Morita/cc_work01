@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Clock Map</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #060912;
+    color: #e0e0f0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #07101e;
+    border-bottom: 1px solid #0f1c30;
+    flex-shrink: 0;
+    z-index: 1000;
+  }
+
+  header h1 {
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #445566;
+    font-weight: 400;
+  }
+
+  #utc-display {
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    color: #334455;
+    letter-spacing: 0.12em;
+  }
+
+  #map {
+    flex: 1;
+    z-index: 1;
+  }
+
+  /* City popup card */
+  .city-popup {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0d1527;
+    border: 1px solid #1e2e4a;
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 160px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    color: #dde0f5;
+  }
+
+  .popup-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .popup-flag { font-size: 1.2rem; line-height: 1; }
+
+  .popup-city {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #c0c8e8;
+  }
+
+  .popup-country {
+    font-size: 0.65rem;
+    color: #445566;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .popup-time {
+    font-size: 1.8rem;
+    font-weight: 200;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    color: #eef0ff;
+    line-height: 1;
+  }
+
+  .popup-date {
+    font-size: 0.7rem;
+    color: #445566;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .popup-offset {
+    font-size: 0.65rem;
+    color: #334455;
+    margin-top: 6px;
+    letter-spacing: 0.06em;
+  }
+
+  .popup-dn {
+    display: inline-block;
+    margin-left: 4px;
+  }
+
+  /* Leaflet popup overrides */
+  .leaflet-popup-content-wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .leaflet-popup-content {
+    margin: 0 !important;
+  }
+
+  .leaflet-popup-tip-container { display: none; }
+
+  /* Custom marker */
+  .city-marker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .marker-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.2);
+    position: relative;
+    z-index: 2;
+    transition: transform 0.2s;
+  }
+
+  .marker-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1.5px solid currentColor;
+    opacity: 0.4;
+    animation: ripple 2s ease-out infinite;
+  }
+
+  @keyframes ripple {
+    0%   { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  /* Bottom ticker */
+  .ticker-wrap {
+    background: #07101e;
+    border-top: 1px solid #0f1c30;
+    overflow: hidden;
+    flex-shrink: 0;
+    height: 40px;
+    display: flex;
+    align-items: center;
+  }
+
+  .ticker {
+    display: flex;
+    gap: 0;
+    animation: scroll 40s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 28px;
+    border-right: 1px solid #0f1c30;
+  }
+
+  .ticker-flag { font-size: 0.95rem; }
+
+  .ticker-city {
+    font-size: 0.7rem;
+    color: #445566;
+    letter-spacing: 0.06em;
+  }
+
+  .ticker-time {
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: #8090b0;
+  }
+
+  .ticker-dn { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>World Clock Map</h1>
+  <div id="utc-display">UTC --:--:--</div>
+</header>
+
+<div id="map"></div>
+
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<script>
+const CITIES = [
+  { city: 'Tokyo',       country: 'Japan',     flag: '🇯🇵', tz: 'Asia/Tokyo',          lat: 35.68,  lng: 139.69 },
+  { city: 'New York',    country: 'USA',       flag: '🇺🇸', tz: 'America/New_York',    lat: 40.71,  lng: -74.01 },
+  { city: 'London',      country: 'UK',        flag: '🇬🇧', tz: 'Europe/London',       lat: 51.51,  lng: -0.13  },
+  { city: 'Paris',       country: 'France',    flag: '🇫🇷', tz: 'Europe/Paris',        lat: 48.86,  lng: 2.35   },
+  { city: 'Dubai',       country: 'UAE',       flag: '🇦🇪', tz: 'Asia/Dubai',          lat: 25.20,  lng: 55.27  },
+  { city: 'Singapore',   country: 'Singapore', flag: '🇸🇬', tz: 'Asia/Singapore',      lat: 1.35,   lng: 103.82 },
+  { city: 'Sydney',      country: 'Australia', flag: '🇦🇺', tz: 'Australia/Sydney',    lat: -33.87, lng: 151.21 },
+  { city: 'Los Angeles', country: 'USA',       flag: '🇺🇸', tz: 'America/Los_Angeles', lat: 34.05,  lng: -118.24},
+  { city: 'São Paulo',   country: 'Brazil',    flag: '🇧🇷', tz: 'America/Sao_Paulo',   lat: -23.55, lng: -46.63 },
+  { city: 'Mumbai',      country: 'India',     flag: '🇮🇳', tz: 'Asia/Kolkata',        lat: 19.08,  lng: 72.88  },
+];
+
+// Initialize map
+const map = L.map('map', {
+  center: [20, 10],
+  zoom: 2,
+  minZoom: 2,
+  maxZoom: 8,
+  zoomControl: true,
+  attributionControl: true,
+});
+
+// CartoDB Dark Matter tiles
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 20,
+}).addTo(map);
+
+const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+function pad2(n) { return String(Math.floor(n)).padStart(2, '0'); }
+
+function getOffset(tz) {
+  const now = new Date();
+  const a = new Date(now.toLocaleString('en-US', { timeZone: localTz }));
+  const b = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+  const d = (b - a) / 3600000;
+  if (d === 0) return 'Local';
+  return (d > 0 ? '+' : '') + (Number.isInteger(d) ? d : d.toFixed(1)) + 'h';
+}
+
+function getCityTime(tz, now) {
+  const parts = {};
+  new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short'
+  }).formatToParts(now).forEach(p => { parts[p.type] = p.value; });
+  const h = parseInt(parts.hour) % 24;
+  return {
+    h, m: parseInt(parts.minute), s: parseInt(parts.second),
+    timeStr: `${pad2(h)}:${pad2(parts.minute)}:${pad2(parts.second)}`,
+    dateStr: `${parts.weekday}  ${parts.year}/${parts.month}/${parts.day}`,
+    isDay: h >= 6 && h < 18,
+  };
+}
+
+// Build markers and popups
+const popupContents = {};
+const markerDots = {};
+
+CITIES.forEach((c, i) => {
+  const dayColor   = '#f0a030';
+  const nightColor = '#7c6af7';
+
+  // Custom icon
+  const icon = L.divIcon({
+    className: '',
+    html: `<div class="city-marker">
+             <div class="marker-dot" id="mdot-${i}" style="background:${dayColor};color:${dayColor}"></div>
+           </div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -10],
+  });
+
+  const marker = L.marker([c.lat, c.lng], { icon }).addTo(map);
+  markerDots[i] = { dayColor, nightColor };
+
+  // Popup content container
+  const now = new Date();
+  const t = getCityTime(c.tz, now);
+
+  const popupEl = document.createElement('div');
+  popupEl.className = 'city-popup';
+  popupEl.id = `popup-${i}`;
+  popupEl.innerHTML = `
+    <div class="popup-header">
+      <span class="popup-flag">${c.flag}</span>
+      <div>
+        <div class="popup-city">${c.city}</div>
+        <div class="popup-country">${c.country}</div>
+      </div>
+    </div>
+    <div class="popup-time" id="ptime-${i}">${t.timeStr}</div>
+    <div class="popup-date" id="pdate-${i}">${t.dateStr}</div>
+    <div class="popup-offset">${getOffset(c.tz)} <span class="popup-dn" id="pdn-${i}">${t.isDay ? '☀️' : '🌙'}</span></div>
+  `;
+  popupContents[i] = popupEl;
+
+  const popup = L.popup({ closeButton: false, maxWidth: 220 }).setContent(popupEl);
+  marker.bindPopup(popup);
+
+  marker.on('mouseover', function() { this.openPopup(); });
+});
+
+// Ticker
+const ticker = document.getElementById('ticker');
+function buildTicker() {
+  ticker.innerHTML = '';
+  // Duplicate for seamless loop
+  for (let pass = 0; pass < 2; pass++) {
+    CITIES.forEach((c, i) => {
+      const item = document.createElement('div');
+      item.className = 'ticker-item';
+      item.id = pass === 0 ? `tick-${i}` : `tick2-${i}`;
+      item.innerHTML = `
+        <span class="ticker-flag">${c.flag}</span>
+        <span class="ticker-city">${c.city.toUpperCase()}</span>
+        <span class="ticker-time" id="${pass === 0 ? 'tt' : 'tt2'}-${i}">--:--:--</span>
+        <span class="ticker-dn" id="${pass === 0 ? 'td' : 'td2'}-${i}"></span>
+      `;
+      ticker.appendChild(item);
+    });
+  }
+}
+buildTicker();
+
+
+// Main tick
+function tick() {
+  const now = new Date();
+
+  // UTC header
+  const uh = now.getUTCHours(), um = now.getUTCMinutes(), us = now.getUTCSeconds();
+  document.getElementById('utc-display').textContent =
+    `UTC  ${pad2(uh)}:${pad2(um)}:${pad2(us)}`;
+
+  // Cities
+  CITIES.forEach((c, i) => {
+    const t = getCityTime(c.tz, now);
+    const col = t.isDay ? markerDots[i].dayColor : markerDots[i].nightColor;
+
+    // Marker dot color
+    const dot = document.getElementById(`mdot-${i}`);
+    if (dot) {
+      dot.style.background = col;
+      dot.style.color = col;
+    }
+
+    // Popup (if open)
+    const pt = document.getElementById(`ptime-${i}`);
+    const pd = document.getElementById(`pdate-${i}`);
+    const pdn = document.getElementById(`pdn-${i}`);
+    if (pt) pt.textContent = t.timeStr;
+    if (pd) pd.textContent = t.dateStr;
+    if (pdn) pdn.textContent = t.isDay ? '☀️' : '🌙';
+
+    // Ticker (both passes)
+    [0, 1].forEach(pass => {
+      const tt = document.getElementById(`${pass === 0 ? 'tt' : 'tt2'}-${i}`);
+      const td = document.getElementById(`${pass === 0 ? 'td' : 'td2'}-${i}`);
+      if (tt) tt.textContent = t.timeStr;
+      if (td) td.textContent = t.isDay ? '☀️' : '🌙';
+    });
+  });
+
+  requestAnimationFrame(tick);
+}
+
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
